@@ -6,27 +6,18 @@ from SLIM_ElasticNet.SLIMElasticNetRecommender import SLIMElasticNetRecommender
 from GraphBased.P3alphaRecommender import P3alphaRecommender
 from GraphBased.RP3betaRecommender import RP3betaRecommender
 
-
-
-
-
-
-from MatrixFactorization.Cython.MatrixFactorization_Cython import MatrixFactorization_BPR_Cython, MatrixFactorization_FunkSVD_Cython
+from MatrixFactorization.Cython.MatrixFactorization_Cython import MatrixFactorization_BPR_Cython, \
+    MatrixFactorization_FunkSVD_Cython
 from MatrixFactorization.PureSVD import PureSVDRecommender
 
 from ParameterTuning.BayesianSearch import BayesianSearch
 
-
 import traceback, pickle
 from Utils.PoolWithSubprocess import PoolWithSubprocess
 
-
-
-
 from ParameterTuning.AbstractClassSearch import DictionaryKeys
 
-
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on 22/11/17
@@ -35,9 +26,8 @@ Created on 22/11/17
 """
 
 
-
-def run_KNNCFRecommender_on_similarity_type(similarity_type, parameterSearch, URM_train, n_cases, output_root_path, metric_to_optimize):
-
+def run_KNNCFRecommender_on_similarity_type(similarity_type, parameterSearch, URM_train, n_cases, output_root_path,
+                                            metric_to_optimize):
     hyperparamethers_range_dictionary = {}
     hyperparamethers_range_dictionary["topK"] = [5, 10, 20, 50, 100, 150, 200, 300, 400, 500, 600, 700, 800]
     hyperparamethers_range_dictionary["shrink"] = [0, 10, 50, 100, 200, 300, 500, 1000]
@@ -53,7 +43,6 @@ def run_KNNCFRecommender_on_similarity_type(similarity_type, parameterSearch, UR
         hyperparamethers_range_dictionary["tversky_beta"] = range(0, 2)
         hyperparamethers_range_dictionary["normalize"] = [True]
 
-
     recommenderDictionary = {DictionaryKeys.CONSTRUCTOR_POSITIONAL_ARGS: [URM_train],
                              DictionaryKeys.CONSTRUCTOR_KEYWORD_ARGS: {},
                              DictionaryKeys.FIT_POSITIONAL_ARGS: dict(),
@@ -63,16 +52,13 @@ def run_KNNCFRecommender_on_similarity_type(similarity_type, parameterSearch, UR
     output_root_path_similarity = output_root_path + "_" + similarity_type
 
     best_parameters = parameterSearch.search(recommenderDictionary,
-                                             n_cases = n_cases,
-                                             output_root_path = output_root_path_similarity,
+                                             n_cases=n_cases,
+                                             output_root_path=output_root_path_similarity,
                                              metric=metric_to_optimize)
 
 
-
-
-
-def run_KNNCBFRecommender_on_similarity_type(similarity_type, parameterSearch, URM_train, ICM_train, n_cases, output_root_path, metric_to_optimize):
-
+def run_KNNCBFRecommender_on_similarity_type(similarity_type, parameterSearch, URM_train, ICM_train, n_cases,
+                                             output_root_path, metric_to_optimize):
     hyperparamethers_range_dictionary = {}
     hyperparamethers_range_dictionary["topK"] = [5, 10, 20, 50, 100, 150, 200, 300, 400, 500, 600, 700, 800]
     hyperparamethers_range_dictionary["shrink"] = [0, 10, 50, 100, 200, 300, 500, 1000]
@@ -91,8 +77,6 @@ def run_KNNCBFRecommender_on_similarity_type(similarity_type, parameterSearch, U
     if similarity_type in ["cosine", "asymmetric"]:
         hyperparamethers_range_dictionary["feature_weighting"] = ["none", "BM25", "TF-IDF"]
 
-
-
     recommenderDictionary = {DictionaryKeys.CONSTRUCTOR_POSITIONAL_ARGS: [ICM_train, URM_train],
                              DictionaryKeys.CONSTRUCTOR_KEYWORD_ARGS: {},
                              DictionaryKeys.FIT_POSITIONAL_ARGS: dict(),
@@ -102,45 +86,34 @@ def run_KNNCBFRecommender_on_similarity_type(similarity_type, parameterSearch, U
     output_root_path_similarity = output_root_path + "_" + similarity_type
 
     best_parameters = parameterSearch.search(recommenderDictionary,
-                                             n_cases = n_cases,
-                                             output_root_path = output_root_path_similarity,
+                                             n_cases=n_cases,
+                                             output_root_path=output_root_path_similarity,
                                              metric=metric_to_optimize)
 
 
-
-
-
-def runParameterSearch_Content(recommender_class, URM_train, ICM_object, ICM_name, n_cases = 30,
-                             evaluator_validation= None, evaluator_test=None, metric_to_optimize = "PRECISION",
-                             output_root_path ="result_experiments/", parallelizeKNN = False):
-
-
+def runParameterSearch_Content(recommender_class, URM_train, ICM_object, ICM_name, n_cases=30,
+                               evaluator_validation=None, evaluator_test=None, metric_to_optimize="PRECISION",
+                               output_root_path="result_experiments/", parallelizeKNN=False):
     # If directory does not exist, create
     if not os.path.exists(output_root_path):
         os.makedirs(output_root_path)
 
-
-
-
-
-   ##########################################################################################################
+    ##########################################################################################################
 
     this_output_root_path = output_root_path + recommender_class.RECOMMENDER_NAME + "_{}".format(ICM_name)
 
-    parameterSearch = BayesianSearch(recommender_class, evaluator_validation=evaluator_validation, evaluator_test=evaluator_test)
-
+    parameterSearch = BayesianSearch(recommender_class, evaluator_validation=evaluator_validation,
+                                     evaluator_test=evaluator_test)
 
     similarity_type_list = ['cosine', 'jaccard', "asymmetric", "dice", "tversky"]
 
     run_KNNCBFRecommender_on_similarity_type_partial = partial(run_KNNCBFRecommender_on_similarity_type,
-                                                   parameterSearch = parameterSearch,
-                                                   URM_train = URM_train,
-                                                   ICM_train = ICM_object,
-                                                   n_cases = n_cases,
-                                                   output_root_path = this_output_root_path,
-                                                   metric_to_optimize = metric_to_optimize)
-
-
+                                                               parameterSearch=parameterSearch,
+                                                               URM_train=URM_train,
+                                                               ICM_train=ICM_object,
+                                                               n_cases=n_cases,
+                                                               output_root_path=this_output_root_path,
+                                                               metric_to_optimize=metric_to_optimize)
 
     if parallelizeKNN:
         pool = PoolWithSubprocess(processes=int(multiprocessing.cpu_count()), maxtasksperchild=1)
@@ -152,44 +125,32 @@ def runParameterSearch_Content(recommender_class, URM_train, ICM_object, ICM_nam
             run_KNNCBFRecommender_on_similarity_type_partial(similarity_type)
 
 
-
-
-
-
-
-
-def runParameterSearch_Collaborative(recommender_class, URM_train, metric_to_optimize = "PRECISION",
-                                     evaluator_validation= None, evaluator_test=None, evaluator_validation_earlystopping = None,
-                                     output_root_path ="result_experiments/", parallelizeKNN = True, n_cases = 30):
-
-
+def runParameterSearch_Collaborative(recommender_class, URM_train, metric_to_optimize="PRECISION",
+                                     evaluator_validation=None, evaluator_test=None,
+                                     evaluator_validation_earlystopping=None,
+                                     output_root_path="result_experiments/", parallelizeKNN=True, n_cases=30):
     from ParameterTuning.AbstractClassSearch import DictionaryKeys
-
 
     # If directory does not exist, create
     if not os.path.exists(output_root_path):
         os.makedirs(output_root_path)
 
-
     try:
-
 
         output_root_path_rec_name = output_root_path + recommender_class.RECOMMENDER_NAME
 
-        parameterSearch = BayesianSearch(recommender_class, evaluator_validation=evaluator_validation, evaluator_test=evaluator_test)
-
-
-
+        parameterSearch = BayesianSearch(recommender_class, evaluator_validation=evaluator_validation,
+                                         evaluator_test=evaluator_test)
 
         if recommender_class in [TopPop, Random]:
-
             recommender = recommender_class(URM_train)
 
             recommender.fit()
 
             output_file = open(output_root_path_rec_name + "_BayesianSearch.txt", "a")
             result_dict, result_baseline = evaluator_validation.evaluateRecommender(recommender)
-            output_file.write("ParameterSearch: Best result evaluated on URM_validation. Results: {}".format(result_baseline))
+            output_file.write(
+                "ParameterSearch: Best result evaluated on URM_validation. Results: {}".format(result_baseline))
 
             pickle.dump(result_dict.copy(),
                         open(output_root_path_rec_name + "_best_result_validation", "wb"),
@@ -202,12 +163,9 @@ def runParameterSearch_Collaborative(recommender_class, URM_train, metric_to_opt
                         open(output_root_path_rec_name + "_best_result_test", "wb"),
                         protocol=pickle.HIGHEST_PROTOCOL)
 
-
             output_file.close()
 
             return
-
-
 
         ##########################################################################################################
 
@@ -216,13 +174,11 @@ def runParameterSearch_Collaborative(recommender_class, URM_train, metric_to_opt
             similarity_type_list = ['cosine', 'jaccard', "asymmetric", "dice", "tversky"]
 
             run_KNNCFRecommender_on_similarity_type_partial = partial(run_KNNCFRecommender_on_similarity_type,
-                                                           parameterSearch = parameterSearch,
-                                                           URM_train = URM_train,
-                                                           n_cases = n_cases,
-                                                           output_root_path = output_root_path_rec_name,
-                                                           metric_to_optimize = metric_to_optimize)
-
-
+                                                                      parameterSearch=parameterSearch,
+                                                                      URM_train=URM_train,
+                                                                      n_cases=n_cases,
+                                                                      output_root_path=output_root_path_rec_name,
+                                                                      metric_to_optimize=metric_to_optimize)
 
             if parallelizeKNN:
                 pool = PoolWithSubprocess(processes=int(2), maxtasksperchild=1)
@@ -233,10 +189,7 @@ def runParameterSearch_Collaborative(recommender_class, URM_train, metric_to_opt
                 for similarity_type in similarity_type_list:
                     run_KNNCFRecommender_on_similarity_type_partial(similarity_type)
 
-
             return
-
-
 
         ##########################################################################################################
 
@@ -245,12 +198,11 @@ def runParameterSearch_Collaborative(recommender_class, URM_train, metric_to_opt
             similarity_type_list = ['cosine', 'jaccard', "asymmetric", "dice", "tversky"]
 
             run_KNNCFRecommender_on_similarity_type_partial = partial(run_KNNCFRecommender_on_similarity_type,
-                                                           parameterSearch = parameterSearch,
-                                                           URM_train = URM_train,
-                                                           n_cases = n_cases,
-                                                           output_root_path = output_root_path_rec_name,
-                                                           metric_to_optimize = metric_to_optimize)
-
+                                                                      parameterSearch=parameterSearch,
+                                                                      URM_train=URM_train,
+                                                                      n_cases=n_cases,
+                                                                      output_root_path=output_root_path_rec_name,
+                                                                      metric_to_optimize=metric_to_optimize)
 
             if parallelizeKNN:
                 pool = PoolWithSubprocess(processes=int(2), maxtasksperchild=1)
@@ -261,10 +213,7 @@ def runParameterSearch_Collaborative(recommender_class, URM_train, metric_to_opt
                 for similarity_type in similarity_type_list:
                     run_KNNCFRecommender_on_similarity_type_partial(similarity_type)
 
-
             return
-
-
 
         ##########################################################################################################
 
@@ -284,11 +233,9 @@ def runParameterSearch_Collaborative(recommender_class, URM_train, metric_to_opt
         #
         #
 
-
-       ##########################################################################################################
+        ##########################################################################################################
 
         if recommender_class is P3alphaRecommender:
-
             hyperparamethers_range_dictionary = {}
             hyperparamethers_range_dictionary["topK"] = [5, 10, 20, 50, 100, 150, 200, 300, 400, 500, 600, 700, 800]
             hyperparamethers_range_dictionary["alpha"] = range(0, 2)
@@ -300,11 +247,9 @@ def runParameterSearch_Collaborative(recommender_class, URM_train, metric_to_opt
                                      DictionaryKeys.FIT_KEYWORD_ARGS: dict(),
                                      DictionaryKeys.FIT_RANGE_KEYWORD_ARGS: hyperparamethers_range_dictionary}
 
-
         ##########################################################################################################
 
         if recommender_class is RP3betaRecommender:
-
             hyperparamethers_range_dictionary = {}
             hyperparamethers_range_dictionary["topK"] = [5, 10, 20, 50, 100, 150, 200, 300, 400, 500, 600, 700, 800]
             hyperparamethers_range_dictionary["alpha"] = range(0, 2)
@@ -317,15 +262,12 @@ def runParameterSearch_Collaborative(recommender_class, URM_train, metric_to_opt
                                      DictionaryKeys.FIT_KEYWORD_ARGS: dict(),
                                      DictionaryKeys.FIT_RANGE_KEYWORD_ARGS: hyperparamethers_range_dictionary}
 
-
-
         ##########################################################################################################
 
         if recommender_class is MatrixFactorization_FunkSVD_Cython:
-
             hyperparamethers_range_dictionary = {}
             hyperparamethers_range_dictionary["sgd_mode"] = ["adagrad", "adam"]
-            #hyperparamethers_range_dictionary["epochs"] = [1, 5, 10, 20, 30, 50, 70, 90, 110]
+            # hyperparamethers_range_dictionary["epochs"] = [1, 5, 10, 20, 30, 50, 70, 90, 110]
             hyperparamethers_range_dictionary["num_factors"] = [1, 5, 10, 20, 30, 50, 70, 90, 110]
             hyperparamethers_range_dictionary["reg"] = [0.0, 1e-3, 1e-6, 1e-9]
             hyperparamethers_range_dictionary["learning_rate"] = [1e-2, 1e-3, 1e-4, 1e-5]
@@ -333,20 +275,19 @@ def runParameterSearch_Collaborative(recommender_class, URM_train, metric_to_opt
             recommenderDictionary = {DictionaryKeys.CONSTRUCTOR_POSITIONAL_ARGS: [URM_train],
                                      DictionaryKeys.CONSTRUCTOR_KEYWORD_ARGS: {},
                                      DictionaryKeys.FIT_POSITIONAL_ARGS: dict(),
-                                     DictionaryKeys.FIT_KEYWORD_ARGS: {"validation_every_n":5, "stop_on_validation":True,
-                                                                       "evaluator_object":evaluator_validation_earlystopping,
-                                                                       "lower_validatons_allowed":20, "validation_metric":metric_to_optimize},
+                                     DictionaryKeys.FIT_KEYWORD_ARGS: {"validation_every_n": 5,
+                                                                       "stop_on_validation": True,
+                                                                       "evaluator_object": evaluator_validation_earlystopping,
+                                                                       "lower_validatons_allowed": 20,
+                                                                       "validation_metric": metric_to_optimize},
                                      DictionaryKeys.FIT_RANGE_KEYWORD_ARGS: hyperparamethers_range_dictionary}
-
-
 
         ##########################################################################################################
 
         if recommender_class is MatrixFactorization_BPR_Cython:
-
             hyperparamethers_range_dictionary = {}
             hyperparamethers_range_dictionary["sgd_mode"] = ["adagrad", "adam"]
-            #hyperparamethers_range_dictionary["epochs"] = [1, 5, 10, 20, 30, 50, 70, 90, 110]
+            # hyperparamethers_range_dictionary["epochs"] = [1, 5, 10, 20, 30, 50, 70, 90, 110]
             hyperparamethers_range_dictionary["num_factors"] = [1, 5, 10, 20, 30, 50, 70, 90, 110]
             hyperparamethers_range_dictionary["batch_size"] = [1]
             hyperparamethers_range_dictionary["positive_reg"] = [0.0, 1e-3, 1e-6, 1e-9]
@@ -354,19 +295,18 @@ def runParameterSearch_Collaborative(recommender_class, URM_train, metric_to_opt
             hyperparamethers_range_dictionary["learning_rate"] = [1e-2, 1e-3, 1e-4, 1e-5]
 
             recommenderDictionary = {DictionaryKeys.CONSTRUCTOR_POSITIONAL_ARGS: [URM_train],
-                                     DictionaryKeys.CONSTRUCTOR_KEYWORD_ARGS: {'positive_threshold':0},
+                                     DictionaryKeys.CONSTRUCTOR_KEYWORD_ARGS: {'positive_threshold': 0},
                                      DictionaryKeys.FIT_POSITIONAL_ARGS: dict(),
-                                     DictionaryKeys.FIT_KEYWORD_ARGS: {"validation_every_n":5, "stop_on_validation":True,
-                                                                       "evaluator_object":evaluator_validation_earlystopping,
-                                                                       "lower_validatons_allowed":20, "validation_metric":metric_to_optimize},
+                                     DictionaryKeys.FIT_KEYWORD_ARGS: {"validation_every_n": 5,
+                                                                       "stop_on_validation": True,
+                                                                       "evaluator_object": evaluator_validation_earlystopping,
+                                                                       "lower_validatons_allowed": 20,
+                                                                       "validation_metric": metric_to_optimize},
                                      DictionaryKeys.FIT_RANGE_KEYWORD_ARGS: hyperparamethers_range_dictionary}
-
-
 
         ##########################################################################################################
 
         if recommender_class is PureSVDRecommender:
-
             hyperparamethers_range_dictionary = {}
             hyperparamethers_range_dictionary["num_factors"] = list(range(0, 250, 5))
 
@@ -376,37 +316,40 @@ def runParameterSearch_Collaborative(recommender_class, URM_train, metric_to_opt
                                      DictionaryKeys.FIT_KEYWORD_ARGS: {},
                                      DictionaryKeys.FIT_RANGE_KEYWORD_ARGS: hyperparamethers_range_dictionary}
 
-
-
         #########################################################################################################
 
         if recommender_class is SLIM_BPR_Cython:
-
             hyperparamethers_range_dictionary = {}
-            hyperparamethers_range_dictionary["topK"] = [10, 50, 100, 200, 500, 800]
-            hyperparamethers_range_dictionary["epochs"] = [5,10, 30, 50, 70, 110]
+            hyperparamethers_range_dictionary["topK"] = [100, 150, 175, 200, 250, 300]
+            hyperparamethers_range_dictionary["epochs"] = [10, 50, 100]
+            hyperparamethers_range_dictionary["batch_size"] = [1, 5, 10]
+            hyperparamethers_range_dictionary["learning_rate"] = [1, 5, 10]
             hyperparamethers_range_dictionary["sgd_mode"] = ["adagrad", "adam"]
-            hyperparamethers_range_dictionary["lambda_i"] = [0.0, 1e-2,1e-3, 1e-6, 1e-9]
-            hyperparamethers_range_dictionary["lambda_j"] = [0.0, 1e-2,1e-3, 1e-6, 1e-9]
+            hyperparamethers_range_dictionary["lambda_i"] = [1e-2, 1e-3, 1e-4, 1e-6]
+            hyperparamethers_range_dictionary["lambda_j"] = [1e-2, 1e-3, 1e-4, 1e-6]
+            hyperparamethers_range_dictionary["gamma"] = [0.3, 0.6, 0.995]
+            hyperparamethers_range_dictionary["beta_1"] = [0.3, 0.6, 0.9]
+            hyperparamethers_range_dictionary["beta_2"] = [0.3, 0.6, 0.999]
 
             recommenderDictionary = {DictionaryKeys.CONSTRUCTOR_POSITIONAL_ARGS: [URM_train],
-                                     DictionaryKeys.CONSTRUCTOR_KEYWORD_ARGS: {'train_with_sparse_weights':True, 'symmetric':True, 'positive_threshold':0},
+                                     DictionaryKeys.CONSTRUCTOR_KEYWORD_ARGS: {'train_with_sparse_weights': True,
+                                                                               'symmetric': True,
+                                                                               'positive_threshold': 0},
                                      DictionaryKeys.FIT_POSITIONAL_ARGS: dict(),
-                                     DictionaryKeys.FIT_KEYWORD_ARGS: {"validation_every_n":5, "stop_on_validation":True,
-                                                                       "evaluator_object":evaluator_validation_earlystopping,
-                                                                       "lower_validatons_allowed":10, "validation_metric":metric_to_optimize},
+                                     DictionaryKeys.FIT_KEYWORD_ARGS: {"validation_every_n": 5,
+                                                                       "stop_on_validation": True,
+                                                                       "evaluator_object": evaluator_validation_earlystopping,
+                                                                       "lower_validatons_allowed": 10,
+                                                                       "validation_metric": metric_to_optimize},
                                      DictionaryKeys.FIT_RANGE_KEYWORD_ARGS: hyperparamethers_range_dictionary}
-
-
 
         ##########################################################################################################
 
         if recommender_class is SLIMElasticNetRecommender:
-
             hyperparamethers_range_dictionary = {}
-            hyperparamethers_range_dictionary["topK"] = [20, 50, 100, 300,800]
-            hyperparamethers_range_dictionary["l1_penalty"] = [1e-4, 1e-5, 1e-6,1e-7]
-            hyperparamethers_range_dictionary["l2_penalty"] = [1.0, 0.0, 0.01, 1e-2, 1e-3]
+            hyperparamethers_range_dictionary["alpha"] = [1, 0.01, 0.001, 0.0001]
+            hyperparamethers_range_dictionary["topK"] = [10, 100, 200, 500, 800]
+            hyperparamethers_range_dictionary["l1_ratio"] = [1.0, 0.1, 0.5, 0.05, 1e-2, 1e-4]
 
             recommenderDictionary = {DictionaryKeys.CONSTRUCTOR_POSITIONAL_ARGS: [URM_train],
                                      DictionaryKeys.CONSTRUCTOR_KEYWORD_ARGS: {},
@@ -414,15 +357,13 @@ def runParameterSearch_Collaborative(recommender_class, URM_train, metric_to_opt
                                      DictionaryKeys.FIT_KEYWORD_ARGS: dict(),
                                      DictionaryKeys.FIT_RANGE_KEYWORD_ARGS: hyperparamethers_range_dictionary}
 
-
-
-       #########################################################################################################
+        #########################################################################################################
 
         ## Final step, after the hyperparameter range has been defined for each type of algorithm
         best_parameters = parameterSearch.search(recommenderDictionary,
-                                                 n_cases = n_cases,
-                                                 output_root_path = output_root_path_rec_name,
-                                                 metric = metric_to_optimize)
+                                                 n_cases=n_cases,
+                                                 output_root_path=output_root_path_rec_name,
+                                                 metric=metric_to_optimize)
 
 
 
@@ -456,12 +397,10 @@ def read_data_split_and_search():
 
     import traceback, os
     import scipy.sparse
-
-    URM_all = scipy.sparse.load_npz('URM_all_matrix.npz')
-    ICM_all = scipy.sparse.load_npz('ICM_all_matrix.npz')
-    URM_train = scipy.sparse.load_npz('URM_train_matrix.npz')
-    URM_test = scipy.sparse.load_npz('URM_test_matrix.npz')
-    URM_validation = URM_test
+    URM_all = scipy.sparse.load_npz('./Matrix/URM_all_matrix.npz')
+    ICM_all = scipy.sparse.load_npz('./Matrix/ICM_all_matrix.npz')
+    URM_train = scipy.sparse.load_npz('./Matrix/URM_train_matrix.npz')
+    URM_test = scipy.sparse.load_npz('./Matrix/URM_test_matrix.npz')
 
     output_root_path = "result_experiments/"
 
@@ -470,22 +409,22 @@ def read_data_split_and_search():
         os.makedirs(output_root_path)
 
     collaborative_algorithm_list = [
-        # SLIM_BPR_Cython,
+        SLIM_BPR_Cython,
         # TopPop,
         # P3alphaRecommender,
         # RP3betaRecommender,
-        ItemKNNCFRecommender
+        # ItemKNNCFRecommender,
         # UserKNNCFRecommender,
         # MatrixFactorization_BPR_Cython,
         # MatrixFactorization_FunkSVD_Cython,
         # PureSVDRecommender,
-        #SLIMElasticNetRecommender
+        # SLIMElasticNetRecommender
     ]
 
     from ParameterTuning.AbstractClassSearch import EvaluatorWrapper
     from Base.Evaluation.Evaluator import SequentialEvaluator
 
-    evaluator_validation_earlystopping = SequentialEvaluator(URM_validation, cutoff_list=[10])
+    evaluator_validation_earlystopping = SequentialEvaluator(URM_test, cutoff_list=[10])
     evaluator_test = SequentialEvaluator(URM_test, cutoff_list=[10])
 
     evaluator_validation = EvaluatorWrapper(evaluator_validation_earlystopping)
@@ -516,6 +455,7 @@ def read_data_split_and_search():
 
 if __name__ == '__main__':
     read_data_split_and_search()
+
 
 
 
